@@ -22,8 +22,8 @@ var _ = func() []uint32 {
 type LEA struct {
 	t  []uint32
 	Rk [][]uint32
-	Nr int
-	Nk int
+	nr int
+	nk int
 }
 
 //rol << * x
@@ -59,27 +59,27 @@ func New(key []byte) (LEA, error) {
 	Newcipher := LEA{}
 	switch keysize {
 	case 128 / 8:
-		Newcipher.Nk = 16
-		Newcipher.Nr = 24
+		Newcipher.nk = 16
+		Newcipher.nr = 24
 		Newcipher.t = make([]uint32, 4)
 	case 192 / 8:
-		Newcipher.Nk = 24
-		Newcipher.Nr = 28
+		Newcipher.nk = 24
+		Newcipher.nr = 28
 		Newcipher.t = make([]uint32, 6)
 	case 256 / 8:
-		Newcipher.Nk = 32
-		Newcipher.Nr = 32
+		Newcipher.nk = 32
+		Newcipher.nr = 32
 		Newcipher.t = make([]uint32, 8)
 	default:
 		return Newcipher, errors.New("KeySizeError")
 	}
 
-	Newcipher.Rk = make([][]uint32, Newcipher.Nr)
+	Newcipher.Rk = make([][]uint32, Newcipher.nr)
 	for i := range Newcipher.Rk {
 		Newcipher.Rk[i] = make([]uint32, 6)
 	}
 
-	switch Newcipher.Nk {
+	switch Newcipher.nk {
 	case 16:
 		Newcipher.t[0] = binary.LittleEndian.Uint32(key[0:4])
 		Newcipher.t[1] = binary.LittleEndian.Uint32(key[4:8])
@@ -124,12 +124,19 @@ func New(key []byte) (LEA, error) {
 		}
 	}
 
+	for i := range Newcipher.t {
+		Newcipher.t[i] = 0
+	}
+	for i := range Newcipher.t {
+		Newcipher.t[i]--
+	}
+
 	return Newcipher, nil
 }
 
 //Encrypt Block
 func (Blockcipher LEA) Encrypt(dst, src []byte) {
-	X := make([][]uint32, Blockcipher.Nr+1)
+	X := make([][]uint32, Blockcipher.nr+1)
 	for i := range X {
 		X[i] = make([]uint32, 4)
 	}
@@ -137,11 +144,11 @@ func (Blockcipher LEA) Encrypt(dst, src []byte) {
 	X[0][1] = binary.LittleEndian.Uint32(src[4:8])
 	X[0][2] = binary.LittleEndian.Uint32(src[8:12])
 	X[0][3] = binary.LittleEndian.Uint32(src[12:16])
-	for i := 0; i < Blockcipher.Nr; i++ {
+	for i := 0; i < Blockcipher.nr; i++ {
 		roundEnc(X[i+1], X[i], Blockcipher.Rk[i])
 	}
-	binary.LittleEndian.PutUint32(dst[0:4], X[Blockcipher.Nr][0])
-	binary.LittleEndian.PutUint32(dst[4:8], X[Blockcipher.Nr][1])
-	binary.LittleEndian.PutUint32(dst[8:12], X[Blockcipher.Nr][2])
-	binary.LittleEndian.PutUint32(dst[12:16], X[Blockcipher.Nr][3])
+	binary.LittleEndian.PutUint32(dst[0:4], X[Blockcipher.nr][0])
+	binary.LittleEndian.PutUint32(dst[4:8], X[Blockcipher.nr][1])
+	binary.LittleEndian.PutUint32(dst[8:12], X[Blockcipher.nr][2])
+	binary.LittleEndian.PutUint32(dst[12:16], X[Blockcipher.nr][3])
 }
