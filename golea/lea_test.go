@@ -147,7 +147,7 @@ func TestLEA_Decrypt(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.Blockcipher.Encrypt(tt.args.dst, tt.args.src)
+			tt.Blockcipher.Decrypt(tt.args.dst, tt.args.src)
 			if !bytes.Equal(tt.args.dst, tt.want) {
 				t.Errorf("Blockcipher.Decrypt() = %v, want %v", tt.args.dst, tt.want)
 			}
