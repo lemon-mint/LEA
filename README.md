@@ -1,6 +1,6 @@
 # LEA
 
-Pure go implementation of `Lightweight Encryption Algorithm (LEA)`
+Pure Go implementation of `Lightweight Encryption Algorithm (LEA)`
 
 # Supported Algorithm
 
