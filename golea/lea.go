@@ -1,6 +1,7 @@
 package golea
 
 import (
+	"crypto/cipher"
 	"encoding/binary"
 	"errors"
 )
@@ -21,7 +22,7 @@ var _ = func() []uint32 {
 //LEA block
 type LEA struct {
 	t  []uint32
-	Rk [][]uint32
+	rk [][]uint32
 	nr int
 	nk int
 }
@@ -36,7 +37,7 @@ func ror(src uint32, x int) uint32 {
 	return (src >> x) | (src << (32 - x))
 }
 
-func roundEnc(dst, x, rk []uint32) []uint32 {
+func roundEncrypt(dst, x, rk []uint32) []uint32 {
 	dst[0] = rol(
 		(x[0]^rk[0])+(x[1]^rk[1]),
 		9,
@@ -53,8 +54,16 @@ func roundEnc(dst, x, rk []uint32) []uint32 {
 	return dst
 }
 
+func roundDecrypt(dst, x, rk []uint32) []uint32 {
+	dst[0] = x[3]
+	dst[1] = (ror(x[0], 9) - (dst[0] ^ rk[0])) ^ rk[1]
+	dst[2] = (rol(x[1], 5) - (dst[1] ^ rk[2])) ^ rk[3]
+	dst[3] = (rol(x[2], 3) - (dst[2] ^ rk[4])) ^ rk[5]
+	return dst
+}
+
 //New LEA
-func New(key []byte) (LEA, error) {
+func New(key []byte) (cipher.Block, error) {
 	keysize := len(key)
 	Newcipher := LEA{}
 	switch keysize {
@@ -74,9 +83,9 @@ func New(key []byte) (LEA, error) {
 		return Newcipher, errors.New("KeySizeError")
 	}
 
-	Newcipher.Rk = make([][]uint32, Newcipher.nr)
-	for i := range Newcipher.Rk {
-		Newcipher.Rk[i] = make([]uint32, 6)
+	Newcipher.rk = make([][]uint32, Newcipher.nr)
+	for i := range Newcipher.rk {
+		Newcipher.rk[i] = make([]uint32, 6)
 	}
 
 	switch Newcipher.nk {
@@ -115,12 +124,12 @@ func New(key []byte) (LEA, error) {
 				),
 				11,
 			)
-			Newcipher.Rk[i][0] = Newcipher.t[0]
-			Newcipher.Rk[i][1] = Newcipher.t[1]
-			Newcipher.Rk[i][2] = Newcipher.t[2]
-			Newcipher.Rk[i][3] = Newcipher.t[1]
-			Newcipher.Rk[i][4] = Newcipher.t[3]
-			Newcipher.Rk[i][5] = Newcipher.t[1]
+			Newcipher.rk[i][0] = Newcipher.t[0]
+			Newcipher.rk[i][1] = Newcipher.t[1]
+			Newcipher.rk[i][2] = Newcipher.t[2]
+			Newcipher.rk[i][3] = Newcipher.t[1]
+			Newcipher.rk[i][4] = Newcipher.t[3]
+			Newcipher.rk[i][5] = Newcipher.t[1]
 		}
 
 	case 24:
@@ -174,12 +183,12 @@ func New(key []byte) (LEA, error) {
 				),
 				17,
 			)
-			Newcipher.Rk[i][0] = Newcipher.t[0]
-			Newcipher.Rk[i][1] = Newcipher.t[1]
-			Newcipher.Rk[i][2] = Newcipher.t[2]
-			Newcipher.Rk[i][3] = Newcipher.t[3]
-			Newcipher.Rk[i][4] = Newcipher.t[4]
-			Newcipher.Rk[i][5] = Newcipher.t[5]
+			Newcipher.rk[i][0] = Newcipher.t[0]
+			Newcipher.rk[i][1] = Newcipher.t[1]
+			Newcipher.rk[i][2] = Newcipher.t[2]
+			Newcipher.rk[i][3] = Newcipher.t[3]
+			Newcipher.rk[i][4] = Newcipher.t[4]
+			Newcipher.rk[i][5] = Newcipher.t[5]
 		}
 	case 32:
 		Newcipher.t[0] = binary.LittleEndian.Uint32(key[0:4])
@@ -234,12 +243,12 @@ func New(key []byte) (LEA, error) {
 				),
 				17,
 			)
-			Newcipher.Rk[i][0] = Newcipher.t[6*i%8]
-			Newcipher.Rk[i][1] = Newcipher.t[(6*i+1)%8]
-			Newcipher.Rk[i][2] = Newcipher.t[(6*i+2)%8]
-			Newcipher.Rk[i][3] = Newcipher.t[(6*i+3)%8]
-			Newcipher.Rk[i][4] = Newcipher.t[(6*i+4)%8]
-			Newcipher.Rk[i][5] = Newcipher.t[(6*i+5)%8]
+			Newcipher.rk[i][0] = Newcipher.t[6*i%8]
+			Newcipher.rk[i][1] = Newcipher.t[(6*i+1)%8]
+			Newcipher.rk[i][2] = Newcipher.t[(6*i+2)%8]
+			Newcipher.rk[i][3] = Newcipher.t[(6*i+3)%8]
+			Newcipher.rk[i][4] = Newcipher.t[(6*i+4)%8]
+			Newcipher.rk[i][5] = Newcipher.t[(6*i+5)%8]
 		}
 	}
 
@@ -264,10 +273,32 @@ func (Blockcipher LEA) Encrypt(dst, src []byte) {
 	X[0][2] = binary.LittleEndian.Uint32(src[8:12])
 	X[0][3] = binary.LittleEndian.Uint32(src[12:16])
 	for i := 0; i < Blockcipher.nr; i++ {
-		roundEnc(X[i+1], X[i], Blockcipher.Rk[i])
+		roundEncrypt(X[i+1], X[i], Blockcipher.rk[i])
 	}
 	binary.LittleEndian.PutUint32(dst[0:4], X[Blockcipher.nr][0])
 	binary.LittleEndian.PutUint32(dst[4:8], X[Blockcipher.nr][1])
 	binary.LittleEndian.PutUint32(dst[8:12], X[Blockcipher.nr][2])
 	binary.LittleEndian.PutUint32(dst[12:16], X[Blockcipher.nr][3])
 }
+
+//Decrypt Block
+func (Blockcipher LEA) Decrypt(dst, src []byte) {
+	X := make([][]uint32, Blockcipher.nr+1)
+	for i := range X {
+		X[i] = make([]uint32, 4)
+	}
+	X[0][0] = binary.LittleEndian.Uint32(src[0:4])
+	X[0][1] = binary.LittleEndian.Uint32(src[4:8])
+	X[0][2] = binary.LittleEndian.Uint32(src[8:12])
+	X[0][3] = binary.LittleEndian.Uint32(src[12:16])
+	for i := 0; i < Blockcipher.nr; i++ {
+		roundDecrypt(X[i+1], X[i], Blockcipher.rk[Blockcipher.nr-i-1])
+	}
+	binary.LittleEndian.PutUint32(dst[0:4], X[Blockcipher.nr][0])
+	binary.LittleEndian.PutUint32(dst[4:8], X[Blockcipher.nr][1])
+	binary.LittleEndian.PutUint32(dst[8:12], X[Blockcipher.nr][2])
+	binary.LittleEndian.PutUint32(dst[12:16], X[Blockcipher.nr][3])
+}
+
+//BlockSize = 16
+func (Blockcipher LEA) BlockSize() int { return 16 }
