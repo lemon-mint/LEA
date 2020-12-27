@@ -1,5 +1,7 @@
 # LEA
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/lemon-mint/LEA/golea.svg)](https://pkg.go.dev/github.com/lemon-mint/LEA/golea)
+
 Pure Go implementation of `Lightweight Encryption Algorithm (LEA)`
 
 The `golea` module uses the standard `cipher.Block` interface.
