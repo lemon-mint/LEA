@@ -301,4 +301,6 @@ func (Blockcipher LEA) Decrypt(dst, src []byte) {
 }
 
 //BlockSize = 16
-func (Blockcipher LEA) BlockSize() int { return 16 }
+func (Blockcipher LEA) BlockSize() int {
+	return 16
+}
