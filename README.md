@@ -4,5 +4,5 @@
 
 ### Encryption
 - [x] LEA-128
-- [ ] LEA-192
-- [ ] LEA-256
+- [x] LEA-192
+- [x] LEA-256
