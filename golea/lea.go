@@ -1,3 +1,4 @@
+//Package golea implements Lightweight Encryption Algorithm
 package golea
 
 import (
@@ -5,6 +6,9 @@ import (
 	"encoding/binary"
 	"errors"
 )
+
+//Blocksize LEA uses 16bit blocksize
+const Blocksize int = 16
 
 var delta []uint32 = make([]uint32, 8)
 var _ = func() []uint32 {
@@ -19,8 +23,7 @@ var _ = func() []uint32 {
 	return delta
 }()
 
-//LEA block
-type LEA struct {
+type lea struct {
 	t  []uint32
 	rk [][]uint32
 	nr int
@@ -62,10 +65,12 @@ func roundDecrypt(dst, x, rk []uint32) []uint32 {
 	return dst
 }
 
-//New LEA
-func New(key []byte) (cipher.Block, error) {
+/*
+NewCipher returns a new cipher.Block
+*/
+func NewCipher(key []byte) (cipher.Block, error) {
 	keysize := len(key)
-	Newcipher := LEA{}
+	Newcipher := lea{}
 	switch keysize {
 	case 128 / 8:
 		Newcipher.nk = 16
@@ -263,7 +268,7 @@ func New(key []byte) (cipher.Block, error) {
 }
 
 //Encrypt Block
-func (Blockcipher LEA) Encrypt(dst, src []byte) {
+func (Blockcipher lea) Encrypt(dst, src []byte) {
 	X := make([][]uint32, Blockcipher.nr+1)
 	for i := range X {
 		X[i] = make([]uint32, 4)
@@ -282,7 +287,7 @@ func (Blockcipher LEA) Encrypt(dst, src []byte) {
 }
 
 //Decrypt Block
-func (Blockcipher LEA) Decrypt(dst, src []byte) {
+func (Blockcipher lea) Decrypt(dst, src []byte) {
 	X := make([][]uint32, Blockcipher.nr+1)
 	for i := range X {
 		X[i] = make([]uint32, 4)
@@ -301,6 +306,6 @@ func (Blockcipher LEA) Decrypt(dst, src []byte) {
 }
 
 //BlockSize = 16
-func (Blockcipher LEA) BlockSize() int {
-	return 16
+func (Blockcipher lea) BlockSize() int {
+	return Blocksize
 }
