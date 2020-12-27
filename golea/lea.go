@@ -86,7 +86,7 @@ func New(key []byte) (LEA, error) {
 		Newcipher.t[2] = binary.LittleEndian.Uint32(key[8:12])
 		Newcipher.t[3] = binary.LittleEndian.Uint32(key[12:16])
 
-		for i := 0; i < 24; i++ {
+		for i := 0; i < Newcipher.nr; i++ {
 			Newcipher.t[0] = rol(
 				Newcipher.t[0]+rol(
 					delta[i%4],
@@ -121,6 +121,125 @@ func New(key []byte) (LEA, error) {
 			Newcipher.Rk[i][3] = Newcipher.t[1]
 			Newcipher.Rk[i][4] = Newcipher.t[3]
 			Newcipher.Rk[i][5] = Newcipher.t[1]
+		}
+
+	case 24:
+		Newcipher.t[0] = binary.LittleEndian.Uint32(key[0:4])
+		Newcipher.t[1] = binary.LittleEndian.Uint32(key[4:8])
+		Newcipher.t[2] = binary.LittleEndian.Uint32(key[8:12])
+		Newcipher.t[3] = binary.LittleEndian.Uint32(key[12:16])
+		Newcipher.t[4] = binary.LittleEndian.Uint32(key[16:20])
+		Newcipher.t[5] = binary.LittleEndian.Uint32(key[20:24])
+
+		for i := 0; i < Newcipher.nr; i++ {
+			Newcipher.t[0] = rol(
+				Newcipher.t[0]+rol(
+					delta[i%6],
+					i,
+				),
+				1,
+			)
+			Newcipher.t[1] = rol(
+				Newcipher.t[1]+rol(
+					delta[i%6],
+					i+1,
+				),
+				3,
+			)
+			Newcipher.t[2] = rol(
+				Newcipher.t[2]+rol(
+					delta[i%6],
+					i+2,
+				),
+				6,
+			)
+			Newcipher.t[3] = rol(
+				Newcipher.t[3]+rol(
+					delta[i%6],
+					i+3,
+				),
+				11,
+			)
+			Newcipher.t[4] = rol(
+				Newcipher.t[4]+rol(
+					delta[i%6],
+					i+4,
+				),
+				13,
+			)
+			Newcipher.t[5] = rol(
+				Newcipher.t[5]+rol(
+					delta[i%6],
+					i+5,
+				),
+				17,
+			)
+			Newcipher.Rk[i][0] = Newcipher.t[0]
+			Newcipher.Rk[i][1] = Newcipher.t[1]
+			Newcipher.Rk[i][2] = Newcipher.t[2]
+			Newcipher.Rk[i][3] = Newcipher.t[3]
+			Newcipher.Rk[i][4] = Newcipher.t[4]
+			Newcipher.Rk[i][5] = Newcipher.t[5]
+		}
+	case 32:
+		Newcipher.t[0] = binary.LittleEndian.Uint32(key[0:4])
+		Newcipher.t[1] = binary.LittleEndian.Uint32(key[4:8])
+		Newcipher.t[2] = binary.LittleEndian.Uint32(key[8:12])
+		Newcipher.t[3] = binary.LittleEndian.Uint32(key[12:16])
+		Newcipher.t[4] = binary.LittleEndian.Uint32(key[16:20])
+		Newcipher.t[5] = binary.LittleEndian.Uint32(key[20:24])
+		Newcipher.t[6] = binary.LittleEndian.Uint32(key[24:28])
+		Newcipher.t[7] = binary.LittleEndian.Uint32(key[28:32])
+
+		for i := 0; i < Newcipher.nr; i++ {
+			Newcipher.t[6*i%8] = rol(
+				Newcipher.t[6*i%8]+rol(
+					delta[i%8],
+					i,
+				),
+				1,
+			)
+			Newcipher.t[(6*i+1)%8] = rol(
+				Newcipher.t[(6*i+1)%8]+rol(
+					delta[i%8],
+					(i+1)%32,
+				),
+				3,
+			)
+			Newcipher.t[(6*i+2)%8] = rol(
+				Newcipher.t[(6*i+2)%8]+rol(
+					delta[i%8],
+					(i+2)%32,
+				),
+				6,
+			)
+			Newcipher.t[(6*i+3)%8] = rol(
+				Newcipher.t[(6*i+3)%8]+rol(
+					delta[i%8],
+					(i+3)%32,
+				),
+				11,
+			)
+			Newcipher.t[(6*i+4)%8] = rol(
+				Newcipher.t[(6*i+4)%8]+rol(
+					delta[i%8],
+					(i+4)%32,
+				),
+				13,
+			)
+			Newcipher.t[(6*i+5)%8] = rol(
+				Newcipher.t[(6*i+5)%8]+rol(
+					delta[i%8],
+					(i+5)%32,
+				),
+				17,
+			)
+			Newcipher.Rk[i][0] = Newcipher.t[6*i%8]
+			Newcipher.Rk[i][1] = Newcipher.t[(6*i+1)%8]
+			Newcipher.Rk[i][2] = Newcipher.t[(6*i+2)%8]
+			Newcipher.Rk[i][3] = Newcipher.t[(6*i+3)%8]
+			Newcipher.Rk[i][4] = Newcipher.t[(6*i+4)%8]
+			Newcipher.Rk[i][5] = Newcipher.t[(6*i+5)%8]
 		}
 	}
 
