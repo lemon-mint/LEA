@@ -1,6 +1,7 @@
 # LEA
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/lemon-mint/LEA/golea.svg)](https://pkg.go.dev/github.com/lemon-mint/LEA/golea)
+[![Go](https://github.com/lemon-mint/LEA/workflows/Go/badge.svg)](https://github.com/lemon-mint/LEA/actions?query=workflow%3AGo)
 
 Pure Go implementation of `Lightweight Encryption Algorithm (LEA)`
 
