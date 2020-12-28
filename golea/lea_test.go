@@ -217,3 +217,21 @@ func Test_EncryptDecrypt(t *testing.T) {
 		})
 	}
 }
+
+func ExampleNewCipher() {
+	lea, err := NewCipher([]byte("MySuperSecretKey"))
+	if err != nil {
+		return
+	}
+	plaintext := []byte("Hello good world")
+	encrypted := make([]byte, 16)
+	decrypted := make([]byte, 16)
+	lea.Encrypt(encrypted, plaintext)
+	fmt.Printf("%x\n", encrypted)
+	lea.Decrypt(decrypted, encrypted)
+	fmt.Println(string(decrypted))
+	// Output:
+	// fd9eef064e2abe62a980a870779fab3d
+	// Hello good world
+
+}
