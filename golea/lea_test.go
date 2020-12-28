@@ -3,6 +3,8 @@ package golea
 import (
 	"bytes"
 	"crypto/cipher"
+	"crypto/rand"
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -189,6 +191,28 @@ func Test_roundDecrypt(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := roundDecrypt(tt.args.dst, tt.args.x, tt.args.rk); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("roundDecrypt() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_EncryptDecrypt(t *testing.T) {
+	data := make([]byte, 1000*16)
+	key := make([]byte, 1000*16)
+	encrypted := make([]byte, 1000*16)
+	buf := make([]byte, 16)
+	rand.Read(data)
+	rand.Read(key)
+	for i := 0; i < 1000; i++ {
+		t.Run(fmt.Sprintf("Test_EncryptDecrypt#%v", i), func(t *testing.T) {
+			lea, err := NewCipher(key[i*16 : i*16+16])
+			if err != nil {
+				t.Error(err)
+			}
+			lea.Encrypt(encrypted[i*16:i*16+16], data[i*16:i*16+16])
+			lea.Decrypt(buf, encrypted[i*16:i*16+16])
+			if !bytes.Equal(buf, data[i*16:i*16+16]) {
+				t.Errorf("got %v, want %v", buf, data[i*16:i*16+16])
 			}
 		})
 	}
