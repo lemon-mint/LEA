@@ -28,6 +28,7 @@ type lea struct {
 	rk [][]uint32
 	nr int
 	nk int
+	x  [][]uint32
 }
 
 //rol << * x
@@ -263,46 +264,41 @@ func NewCipher(key []byte) (cipher.Block, error) {
 	for i := range Newcipher.t {
 		Newcipher.t[i]--
 	}
-
+	Newcipher.x = make([][]uint32, Newcipher.nr+1)
+	for i := range Newcipher.x {
+		Newcipher.x[i] = make([]uint32, 4)
+	}
 	return Newcipher, nil
 }
 
 //Encrypt Block
 func (Blockcipher lea) Encrypt(dst, src []byte) {
-	X := make([][]uint32, Blockcipher.nr+1)
-	for i := range X {
-		X[i] = make([]uint32, 4)
-	}
-	X[0][0] = binary.LittleEndian.Uint32(src[0:4])
-	X[0][1] = binary.LittleEndian.Uint32(src[4:8])
-	X[0][2] = binary.LittleEndian.Uint32(src[8:12])
-	X[0][3] = binary.LittleEndian.Uint32(src[12:16])
+	Blockcipher.x[0][0] = binary.LittleEndian.Uint32(src[0:4])
+	Blockcipher.x[0][1] = binary.LittleEndian.Uint32(src[4:8])
+	Blockcipher.x[0][2] = binary.LittleEndian.Uint32(src[8:12])
+	Blockcipher.x[0][3] = binary.LittleEndian.Uint32(src[12:16])
 	for i := 0; i < Blockcipher.nr; i++ {
-		roundEncrypt(X[i+1], X[i], Blockcipher.rk[i])
+		roundEncrypt(Blockcipher.x[i+1], Blockcipher.x[i], Blockcipher.rk[i])
 	}
-	binary.LittleEndian.PutUint32(dst[0:4], X[Blockcipher.nr][0])
-	binary.LittleEndian.PutUint32(dst[4:8], X[Blockcipher.nr][1])
-	binary.LittleEndian.PutUint32(dst[8:12], X[Blockcipher.nr][2])
-	binary.LittleEndian.PutUint32(dst[12:16], X[Blockcipher.nr][3])
+	binary.LittleEndian.PutUint32(dst[0:4], Blockcipher.x[Blockcipher.nr][0])
+	binary.LittleEndian.PutUint32(dst[4:8], Blockcipher.x[Blockcipher.nr][1])
+	binary.LittleEndian.PutUint32(dst[8:12], Blockcipher.x[Blockcipher.nr][2])
+	binary.LittleEndian.PutUint32(dst[12:16], Blockcipher.x[Blockcipher.nr][3])
 }
 
 //Decrypt Block
 func (Blockcipher lea) Decrypt(dst, src []byte) {
-	X := make([][]uint32, Blockcipher.nr+1)
-	for i := range X {
-		X[i] = make([]uint32, 4)
-	}
-	X[0][0] = binary.LittleEndian.Uint32(src[0:4])
-	X[0][1] = binary.LittleEndian.Uint32(src[4:8])
-	X[0][2] = binary.LittleEndian.Uint32(src[8:12])
-	X[0][3] = binary.LittleEndian.Uint32(src[12:16])
+	Blockcipher.x[0][0] = binary.LittleEndian.Uint32(src[0:4])
+	Blockcipher.x[0][1] = binary.LittleEndian.Uint32(src[4:8])
+	Blockcipher.x[0][2] = binary.LittleEndian.Uint32(src[8:12])
+	Blockcipher.x[0][3] = binary.LittleEndian.Uint32(src[12:16])
 	for i := 0; i < Blockcipher.nr; i++ {
-		roundDecrypt(X[i+1], X[i], Blockcipher.rk[Blockcipher.nr-i-1])
+		roundDecrypt(Blockcipher.x[i+1], Blockcipher.x[i], Blockcipher.rk[Blockcipher.nr-i-1])
 	}
-	binary.LittleEndian.PutUint32(dst[0:4], X[Blockcipher.nr][0])
-	binary.LittleEndian.PutUint32(dst[4:8], X[Blockcipher.nr][1])
-	binary.LittleEndian.PutUint32(dst[8:12], X[Blockcipher.nr][2])
-	binary.LittleEndian.PutUint32(dst[12:16], X[Blockcipher.nr][3])
+	binary.LittleEndian.PutUint32(dst[0:4], Blockcipher.x[Blockcipher.nr][0])
+	binary.LittleEndian.PutUint32(dst[4:8], Blockcipher.x[Blockcipher.nr][1])
+	binary.LittleEndian.PutUint32(dst[8:12], Blockcipher.x[Blockcipher.nr][2])
+	binary.LittleEndian.PutUint32(dst[12:16], Blockcipher.x[Blockcipher.nr][3])
 }
 
 //BlockSize = 16
